@@ -1,16 +1,23 @@
 /// <reference path="webgl.d.ts" />
 
-barrier = class {
-    constructor(gl, pos,len_edge,rail_len,url) {
+magnet = class {
+    constructor(gl, pos,url) {
         this.positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-
+        this.edge = 0.25;
         this.positions = [
 	    // Front face
-	    rail_len, 2*len_edge,0,
-	    -rail_len,2*len_edge,0,
-	    -rail_len,-len_edge,0,
-	    rail_len, -len_edge,0,
+	    -this.edge, -this.edge,  0,
+	     this.edge, -this.edge,  0,
+	     this.edge,  this.edge,  0,
+	    -this.edge,  this.edge,  0,
+
+	    //Back Face
+
+	    -this.edge, -this.edge,  0,
+	     this.edge, -this.edge,  0,
+	     this.edge,  this.edge,  0,
+	    -this.edge,  this.edge,  0,
 	  ];
 
         this.rotation = 0;
@@ -55,8 +62,6 @@ barrier = class {
             0.0,  1.0,
         ];
         this.texture = loadTexture(gl,url);
-
-
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),gl.STATIC_DRAW);
 
         const indexBuffer = gl.createBuffer();
@@ -67,7 +72,12 @@ barrier = class {
         // position.
 
         const indices = [
-            0,1,2,0,2,3
+	    0,  1,  2,      0,  2,  3,    // front
+	    4,5,6, 4,6,7,
+	    0,3,7, 0,7,4,
+	    0,1,4, 1,4,5,
+	    1,2,5, 2,5,6,
+	    2,3,6, 3,6,7,
 	  ];
 
         // Now send the element array to GL
@@ -135,6 +145,7 @@ barrier = class {
       
         // Tell the shader we bound the texture to texture unit 0
         gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+        // Tell WebGL which indices to use to index the vertices
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer.indices);
 
         // Tell WebGL to use our program when drawing
@@ -153,22 +164,16 @@ barrier = class {
             modelViewMatrix);
 
         {
-            const vertexCount = 6;
+            const vertexCount = 36;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
         }
-    }
+    };
     detect_collision(pos_cube,edge){
-        // var dist=0;
-        // for(var i=0;i<3;i++)
-        //     dist += (this.pos[i]-pos_cube[i])*(this.pos[i]-pos_cube[i]);
-        // if(dist < (edge/2)*(edge/2))
-        //     return true;
-        // return false;
         var dist=this.pos[2]-pos_cube[2];
         if( ((dist>=0 && dist < (edge/2))) && ((this.pos[0]+0.25)>=(pos_cube[0]+(edge/2)) && (this.pos[0]-0.25)<=(pos_cube[0]-(edge/2))) && ((this.pos[1]+0.25)>=(pos_cube[1]) && (this.pos[1]-0.25)<=(pos_cube[1])))
             return true;
         return false;
-    }
+    };
 };

@@ -21,8 +21,8 @@ sky = class {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positions), gl.STATIC_DRAW);
         
         this.faceColors = [
-            [ 0, 0, 1, 1],
-            [ 0, 0, 1, 1],
+            [ 226/255,163/255,83/255,1],
+            [ 226/255,163/255,83/255,1],
             // [ 0, 0, 1, 1], // Left face: purple
             // [ 0, 0, 1, 1], // Left face: purple
             // [ 0, 0, 1, 1], // Left face: purple

@@ -174,5 +174,13 @@ coin = class {
         if(dist < (edge/2)*(edge/2))
             return true;
         return false;
+    };
+    detect_magnet_collision(pos_cube){
+        var dist=0;
+        for(var i=0;i<3;i++)
+            dist += (this.pos[i]-pos_cube[i])*(this.pos[i]-pos_cube[i]);
+        if(dist < 4.3)
+            return true;
+        return false;
     }
 };

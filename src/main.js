@@ -8,6 +8,7 @@ main();
 
 var c;
 var police;
+var dogs;
 var ground_piece;
 var sky;
 var coins;
@@ -19,6 +20,13 @@ var wall_left,wall_right;
 var spikes;
 var trains;
 var jump_boots;
+var alt=0;
+var grayscale = 0;
+var flashing=0;
+var magnets;
+var legs_dog;
+var legs_police;
+var end_flags;
 
 document.addEventListener('keydown', keyDownHandler, false);
 document.addEventListener('keyup', keyUpHandler, false);
@@ -69,8 +77,29 @@ function main() {
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
-  c = new cube(gl,[0,0.5,-10],'./images/player.jpeg');
-  police = new cube(gl,[0,0.5,-14],'./images/police.jpeg');
+  c = new cube(gl,[0,0.5,0],'./images/player.jpeg');
+  end_flags = new end_flag(gl,[0,3.5,999],'./images/end_flag.png');
+  police = new cube(gl,[0,1.8,4],'./images/police.jpeg');
+  dogs = new dog(gl,[1,1,4],'./images/dog.jpeg')
+  legs_dog=[];
+  var l = new leg(gl,[0.9,0.8,3.9],0.02);
+  legs_dog.push(l);
+  l = new leg(gl,[0.9,0.8,4.1],0.02);
+  l.val *= -1;
+  legs_dog.push(l);
+  l = new leg(gl,[1.1,0.8,3.9],0.02);
+  legs_dog.push(l);
+  l = new leg(gl,[1.1,0.8,4.1],0.02);
+  l.val *= -1;
+  legs_dog.push(l);
+
+  legs_police = [];
+  l = new leg(gl,[-0.1,1.2,4.1],0.06);
+  l.val *= -1;
+  legs_police.push(l);
+  l = new leg(gl,[0.1,1.2,3.9],0.06);
+  legs_police.push(l);
+  
   ground_piece = [];
   for(var i=0;i<1000;i+=20)
   {
@@ -80,13 +109,13 @@ function main() {
   wall_left = [];
   for(var i=0;i<1000;i+=20)
   {
-    var temp= new wall(gl,[4,0.1,i],'./images/brick_wall.jpeg');
+    var temp= new wall(gl,[4,1.6,i],'./images/brick_wall.jpeg');
     wall_left.push(temp);
   }
   wall_right = [];
   for(var i=0;i<1000;i+=20)
   {
-    var temp= new wall(gl,[-6,0.1,i],'./images/brick_wall.jpeg');
+    var temp= new wall(gl,[-6,1.6,i],'./images/brick_wall.jpeg');
     wall_right.push(temp);
   }
   sky = new sky(gl,[0,100,1000]);
@@ -101,45 +130,76 @@ function main() {
     rail2.push(temp)
   }
   jet = []
-  for(var i=0;i<300;i++)
+  for(var i=0;i<10;i++)
   {
-    var temp = new jetpack(gl,[-2,0.5,i*10 + 3]);
+    var temp = new jetpack(gl,[-2,0.5,i*100 + 13]);
     jet.push(temp);
   }
   jump_boots=[];
-  for(var i=0;i<600;i++)
+  for(var i=0;i<10;i++)
   {
-    var temp = new super_jump(gl,[0,0.25,600+6*i],'./images/jump.png');
+    var temp = new super_jump(gl,[0,0.25,17+100*i],'./images/jump.png');
     jump_boots.push(temp);
   }
-  coins = [];
-  for(var i=0;i<100;i++)
+  magnets = [];
+  for(var i=0;i<10;i++)
   {
-    var temp = new coin(gl,[0,0.5,i+5*i]);
+    var temp = new magnet(gl,[0,0.25,19+100*i],'./images/magnet.jpeg');
+    magnets.push(temp);
+  }
+  coins = [];
+  for(var i=0;i<1000;i++)
+  {
+    var temp;
+    if(i%2)
+      temp = new coin(gl,[0,0.5,i+5*i+5]);
+    else
+      temp = new coin(gl,[-2,0.5,i+5*i+5]);
     coins.push(temp);
+    if(i%2)
+      temp = new coin(gl,[0,7,i+5*i+5]);
+    else
+      temp = new coin(gl,[-2,7,i+5*i+5]);
+    coins.push(temp)
   }
   ground_obs = [];
   for(var i=0;i<100;i++)
   {
-    var temp = new obstacle_ground(gl,[-2,0.5,i+5*i],c.edge*2,rail2[0].diff_rail,'./images/obstacle_ground.png');
+    var temp;
+    if(i%2)
+      temp = new obstacle_ground(gl,[0,0.5,i+5*i+10],c.edge*2,rail2[2].diff_rail,'./images/obstacle_ground.png');
+    else
+      temp = new obstacle_ground(gl,[-2,0.5,i+5*i+10],c.edge*2,rail2[0].diff_rail,'./images/obstacle_ground.png');
     ground_obs.push(temp);
   }
   barr_obs = [];
   for(var i=0;i<100;i++)
   {
-    var temp = new barrier(gl,[-2,1.5,i+6*i],c.edge*2,rail2[0].diff_rail,'./images/obstacle_ground.png');
+    var temp;
+    if(i%2)
+      temp = new barrier(gl,[-2,1.3,i+6*i+11],c.edge*2,rail2[0].diff_rail,'./images/barrier.png');
+    else
+      temp = new barrier(gl,[0,1.3,i+6*i+11],c.edge*2,rail2[0].diff_rail,'./images/barrier.png');
     barr_obs.push(temp);
   }
   trains = [];
   for(var i=0;i<10;i++)
   {
-      var temp = new train(gl,[0,1.1,i*10 + 4],'./images/train.png');
+    var temp;
+      if(i%2==0)
+        temp = new train(gl,[0,1.1,i*100 + 7],'./images/train.png');
+      else
+        temp = new train(gl,[-2,1.1,i*100 + 7],'./images/train.png');
       trains.push(temp);
   }
   spikes = []
   for(var i=0;i<10;i++)
   {
-      var temp = new spike(gl,[0,0.5,i*10+300],'./images/spike.jpg');
+      var temp;
+      if(i%2)
+        temp = new spike(gl,[-2,0.5,i*10+11],'./images/spike.jpg');
+      else
+        temp = new spike(gl,[0,0.5,i*10+11],'./images/spike.jpg');
       spikes.push(temp);
   }
   // If we don't have a GL context, give up now
@@ -192,10 +252,24 @@ function main() {
     }
   `;
 
+  const fsSource_f = `
+  precision mediump float;
+  varying vec4 v_color;
+  varying vec2 vTextureCoord;
+  uniform sampler2D uSampler;
+  void main() 
+  {
+    vec3 color = texture2D(uSampler, vTextureCoord).rgb;
+    gl_FragColor = vec4(color.r*1.5,color.g*1.5,color.b*1.5, 1.0);
+  }
+`;
+
+
   // Initialize a shader program; this is where all the lighting
   // for the vertices and so forth is established.
   const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
   const shaderProgram_g = initShaderProgram(gl, vsSource, fsSource_g);
+  const shaderProgram_f = initShaderProgram(gl, vsSource, fsSource_f);
 
   const programInfo = {
     program: shaderProgram,
@@ -219,6 +293,18 @@ function main() {
       projectionMatrix: gl.getUniformLocation(shaderProgram_g, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram_g, 'uModelViewMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram_g, 'uSampler'),
+    },
+  };
+  const programInfo_f = {
+    program: shaderProgram_f,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram_f, 'aVertexPosition'),
+      textureCoord: gl.getAttribLocation(shaderProgram_f, 'aTextureCoord'),
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram_f, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram_f, 'uModelViewMatrix'),
+      uSampler: gl.getUniformLocation(shaderProgram_f, 'uSampler'),
     },
   };
   const vsSource_c = `
@@ -264,6 +350,8 @@ function main() {
 
   // Draw the scene repeatedly
   function render(now) {
+    if(c.pos[2] >= end_flags.pos[2])
+      exit(0);
     now *= 0.001;  // convert to seconds
     const deltaTime = now - then;
     then = now;
@@ -277,7 +365,7 @@ function main() {
       c.move_up();
     }
     tick_elements();
-    drawScene_texture(gl, programInfo,programInfo_c, deltaTime);
+    drawScene_texture(gl, programInfo,programInfo_c,programInfo_g,programInfo_f, deltaTime);
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
@@ -286,45 +374,25 @@ function main() {
 //
 // Draw the scene.
 //
-function drawScene_texture(gl, programInfo,programInfo_c, deltaTime) {
+function drawScene_texture(gl, programInfo,programInfo_c,programInfo_g,programInfo_f,deltaTime) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
   gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-
-  // Clear the canvas before we start drawing on it.
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  // Create a perspective matrix, a special matrix that is
-  // used to simulate the distortion of perspective in a camera.
-  // Our field of view is 45 degrees, with a width/height
-  // ratio that matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
-
   const fieldOfView = 60 * Math.PI / 180;   // in radians
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 100000.0;
   const projectionMatrix = mat4.create();
+  mat4.perspective(projectionMatrix,fieldOfView,aspect,zNear,zFar);
 
-  // note: glmatrix.js always has the first argument
-  // as the destination to receive the result.
-  mat4.perspective(projectionMatrix,
-                   fieldOfView,
-                   aspect,
-                   zNear,
-                   zFar);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
     var cameraMatrix = mat4.create();
     mat4.translate(cameraMatrix, cameraMatrix, [2, 5, 0]);
     var cameraPosition=[
       c.pos[0],
-      c.pos[1]+2,
-      c.pos[2]-5,
+      c.pos[1]+2.9,
+      c.pos[2]-6,
     ];
     var up = [0, 1, 0];
 
@@ -337,9 +405,84 @@ function drawScene_texture(gl, programInfo,programInfo_c, deltaTime) {
     var viewProjectionMatrix = mat4.create();
 
     mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
-
+  if(grayscale==1){
+    c.draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    end_flags.draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    police.draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    dogs.draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<ground_piece.length;i++)  
+      ground_piece[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<wall_left.length;i++)  
+      wall_left[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<wall_right.length;i++)  
+      wall_right[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<rail1.length;i++)  
+      rail1[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<rail2.length;i++)  
+      rail2[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<trains.length;i++)  
+      trains[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<spikes.length;i++)  
+      spikes[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<jump_boots.length;i++)  
+      jump_boots[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<magnets.length;i++)  
+      magnets[i].draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+  }else if(flashing==1){
+    setInterval(function(){alt = !alt},2000);
+    // alt = !alt;
+    if(alt){
+    c.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    end_flags.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    police.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    dogs.draw(gl, viewProjectionMatrix, programInfo_g, deltaTime);
+    for(var i=0;i<ground_piece.length;i++)  
+      ground_piece[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<wall_left.length;i++)  
+      wall_left[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<wall_right.length;i++)  
+      wall_right[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<rail1.length;i++)  
+      rail1[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<rail2.length;i++)  
+      rail2[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<trains.length;i++)  
+      trains[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<spikes.length;i++)  
+      spikes[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<jump_boots.length;i++)  
+      jump_boots[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    for(var i=0;i<magnets.length;i++)  
+      magnets[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+    }else{
+      c.draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      end_flags.draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      police.draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      dogs.draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<ground_piece.length;i++)  
+        ground_piece[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<wall_left.length;i++)  
+        wall_left[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<wall_right.length;i++)  
+        wall_right[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<rail1.length;i++)  
+        rail1[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<rail2.length;i++)  
+        rail2[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<trains.length;i++)  
+        trains[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<spikes.length;i++)  
+        spikes[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<jump_boots.length;i++)  
+        jump_boots[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+      for(var i=0;i<magnets.length;i++)  
+        magnets[i].draw(gl, viewProjectionMatrix, programInfo_f, deltaTime);
+    }
+  }else{
   c.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+  end_flags.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
   police.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+  dogs.draw(gl, viewProjectionMatrix, programInfo, deltaTime);
   for(var i=0;i<ground_piece.length;i++)  
     ground_piece[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
   for(var i=0;i<wall_left.length;i++)  
@@ -356,7 +499,13 @@ function drawScene_texture(gl, programInfo,programInfo_c, deltaTime) {
     spikes[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
   for(var i=0;i<jump_boots.length;i++)  
     jump_boots[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
-
+  for(var i=0;i<magnets.length;i++)  
+    magnets[i].draw(gl, viewProjectionMatrix, programInfo, deltaTime);
+  }
+  for(var i=0;i<legs_dog.length;i++)
+    legs_dog[i].draw(gl, viewProjectionMatrix, programInfo_c, deltaTime);
+  for(var i=0;i<legs_police.length;i++)
+    legs_police[i].draw(gl, viewProjectionMatrix, programInfo_c, deltaTime);
   sky.draw(gl, viewProjectionMatrix, programInfo_c, deltaTime);
   for(var i=0;i<coins.length;i++)
     coins[i].draw(gl, viewProjectionMatrix, programInfo_c, deltaTime);
@@ -420,17 +569,48 @@ function loadShader(gl, type, source) {
 
 function tick_elements(){
   c.tick(downPressed);
+  end_flags.pos[1] = c.pos[1] + 3;
   if(c.spike_time > 0)
   {
     police.speedz = 0.04;
     police.pos[0] = c.pos[0];
-    police.pos[1] = 0.5;
-    police.pos[2] = c.pos[2] - 2;
+    police.pos[1] = 1.8;
+    police.pos[2] = c.pos[2] - 4;
   }else{
     police.speedz -= 0.000001;
     if(police.speedz <=0.01)
       police.speedz = 0.04;
   }
+  for(var i=0;i<3;i++)
+    dogs.pos[i] = police.pos[i];
+  dogs.pos[1] =1;
+  dogs.pos[0] += 1;
+  if(c.pos[0]==-2)
+    dogs.pos[0]=-3;
+  if(police.pos[2]!=c.pos[2]-4)
+  {
+    for(var i=0;i<3;i++)
+      dogs.pos[i] = c.pos[i];
+    dogs.pos[2] -=4;
+    dogs.pos[1] =1;
+  }
+  for(var i=0;i<legs_dog.length;i++)
+    legs_dog[i].tick();
+  legs_dog[0].pos[0] = dogs.pos[0] - 0.1;
+  legs_dog[1].pos[0] = dogs.pos[0] - 0.1;
+  legs_dog[0].pos[2] = dogs.pos[2] - 0.1;
+  legs_dog[1].pos[2] = dogs.pos[2] + 0.1;
+  legs_dog[2].pos[0] = dogs.pos[0] + 0.1;
+  legs_dog[3].pos[0] = dogs.pos[0] + 0.1;
+  legs_dog[2].pos[2] = dogs.pos[2] - 0.1;
+  legs_dog[3].pos[2] = dogs.pos[2] + 0.1;
+  for(var i=0;i<legs_police.length;i++)
+  {
+    legs_police[i].tick();
+    legs_police[i].pos[2]=police.pos[2];
+  }
+  legs_police[0].pos[0] = police.pos[0] - 0.1;
+  legs_police[1].pos[0] = police.pos[0] + 0.1;
   var temp=[];
   for(var i=0;i<coins.length;i++)
     if(coins[i].detect_collision(c.pos,2*c.edge)==false)
@@ -449,16 +629,33 @@ function tick_elements(){
     }
   jump_boots=temp;
   temp=[];
+  for(var i=0;i<magnets.length;i++)
+    if(magnets[i].detect_collision(c.pos,2*c.edge)==false)
+      temp.push(magnets[i]);
+    else{
+      c.magnet_time = 500;
+    }
+  magnets=temp;
+  if(c.magnet_time > 0){
+    temp=[];
+    for(var i=0;i<coins.length;i++)
+      if(coins[i].detect_magnet_collision(c.pos)==false)
+        temp.push(coins[i]);
+      else
+        c.score += 1;
+    coins = temp;
+  }
+  temp=[];
   for(var i=0;i<jet.length;i++)
     if(jet[i].detect_collision(c.pos,2*c.edge)==false)
       temp.push(jet[i]);
     else
     {
       c.beg = c.pos[1];
-      c.pos[1] = 4;
-      c.speedz=1;
+      c.pos[1] = 7;
+      c.speedz=1.3;
       c.key_freeze=1;
-      c.jetpack_time = 300;
+      c.jetpack_time = 200;
     }
   jet=temp;
   for(var i=0;i<ground_obs.length;i++)
@@ -536,4 +733,19 @@ function loadTexture(gl, url) {
 
 function isPowerOf2(value) {
   return (value & (value - 1)) == 0;
+}
+
+function Grayscale() {
+    grayscale = true;
+    flashing = false;
+}
+
+function Flashing() {
+    flashing = true;
+    grayscale = false;
+}
+
+function Normal() {
+  flashing = false;
+  grayscale = false;
 }

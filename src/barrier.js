@@ -1,16 +1,17 @@
 /// <reference path="webgl.d.ts" />
 
-obstacle_ground = class {
+barrier = class {
     constructor(gl, pos,len_edge,rail_len,url) {
         this.positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
 
         this.positions = [
 	    // Front face
-	    rail_len, len_edge,0,
-	    -rail_len,len_edge,0,
+	    rail_len, 2*len_edge,0,
+	    -rail_len,2*len_edge,0,
 	    -rail_len,-len_edge,0,
-	    rail_len, -len_edge,0,
+        rail_len, -len_edge,0,
+        
 	  ];
 
         this.rotation = 0;
@@ -160,14 +161,8 @@ obstacle_ground = class {
         }
     }
     detect_collision(pos_cube,edge){
-        // var dist=0;
-        // for(var i=0;i<3;i++)
-        //     dist += (this.pos[i]-pos_cube[i])*(this.pos[i]-pos_cube[i]);
-        // if(dist < (edge/2)*(edge/2))
-        //     return true;
-        // return false;
         var dist=this.pos[2]-pos_cube[2];
-        if( ((dist>=0 && dist < (edge/2))) && ((this.pos[0]+0.25)>=(pos_cube[0]+(edge/2)) && (this.pos[0]-0.25)<=(pos_cube[0]-(edge/2))) && ((this.pos[1]+0.25)>=(pos_cube[1]) && (this.pos[1]-0.25)<=(pos_cube[1])))
+        if( ((dist>=0 && dist < (edge/2))) && ((this.pos[1]+0.5)>=(pos_cube[1]+(edge/2)) && (this.pos[1]-0.5)<=(pos_cube[1]-(edge/2))) && this.pos[0]==pos_cube[0])
             return true;
         return false;
     }
